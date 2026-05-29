@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>NUESTRO UNIVERSO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght=200;300;400;600&family=Cormorant+Garamond:ital,wght=1,300&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #ffb3c6;
+            --secondary: #ff809f;
+            --accent: #ffd1dc;
+            --text-glow: 0 0 15px rgba(255, 179, 198, 0.6), 0 0 30px rgba(255, 128, 159, 0.4);
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #030102; 
+            font-family: 'Montserrat', sans-serif; 
+            color: white; 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        #canvas-container { 
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; 
+            z-index: 1; display: none; opacity: 0;
+            transition: opacity 1.2s ease-in-out; 
+        }
+
+        /* Pantalla de Inicio */
+        #intro-screen {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #030102;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 200; transition: opacity 0.6s ease-out; 
+        }
+        
+        #intro-screen h1 {
+            font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: 3.5rem; letter-spacing: 6px; 
+            margin-bottom: 2rem; text-align: center; text-shadow: var(--text-glow); color: var(--accent);
+            opacity: 0; transform: translateY(20px); animation: fadeIn 1.2s ease forwards 0.1s;
+        }
+
+        #error-msg {
+            font-size: 0.9rem; color: #ff6b6b; margin-bottom: 20px; font-weight: 300; text-align: center; max-width: 80%;
+            display: none;
+        }
+
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+        #btn-enter {
+            padding: 12px 45px; font-size: 1rem; font-weight: 300; background: transparent; color: var(--accent);
+            border: 1px solid rgba(255, 179, 198, 0.4); border-radius: 50px; cursor: pointer; transition: all 0.3s ease; 
+            font-family: inherit; letter-spacing: 4px; box-shadow: 0 0 20px rgba(255, 179, 198, 0.1);
+            opacity: 0; animation: fadeIn 1.2s ease forwards 0.4s;
+        }
+
+        #btn-enter:hover { background: rgba(255, 179, 198, 0.1); border-color: var(--primary); box-shadow: var(--text-glow); transform: scale(1.05); }
+
+        /* Pantalla de la Carta */
+        #letter-screen {
+            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; 
+            background: transparent; z-index: 150; display: flex; justify-content: center; align-items: center; 
+            opacity: 0; pointer-events: none; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+
+        /* Tarjeta de Mensaje (Frases Cortas) */
+        #message-card {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -40%) scale(0.95);
+            width: 85%; max-width: 450px; padding: 40px 30px; text-align: center;
+            background: linear-gradient(135deg, rgba(25, 10, 15, 0.8) 0%, rgba(10, 5, 10, 0.95) 100%);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 179, 198, 0.3); border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 0 30px rgba(255, 179, 198, 0.1);
+            z-index: 180; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        #message-card.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+
+        /* NUEVA VENTANA DE FOTOS (Rediseñada totalmente Vertical y Espaciosa) */
+        #gallery-card {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -40%) scale(0.95);
+            width: 90%; max-width: 420px; height: 85vh; max-height: 680px; padding: 25px 20px; text-align: center;
+            background: linear-gradient(135deg, rgba(20, 8, 12, 0.85) 0%, rgba(5, 2, 5, 0.98) 100%);
+            backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 179, 198, 0.35); border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 0 30px rgba(255, 179, 198, 0.15);
+            z-index: 180; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        #gallery-card.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+
+        #card-icon { font-size: 3.5rem; margin-bottom: 15px; filter: drop-shadow(0 0 20px rgba(255,179,198,0.8)); }
+
+        #card-title, .gallery-title {
+            font-family: 'Montserrat', sans-serif; font-size: 0.9rem; letter-spacing: 3px; 
+            color: var(--primary); text-transform: uppercase; margin-bottom: 10px;
+        }
+
+        #card-text { 
+            font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 1.8rem; line-height: 1.4; 
+            font-weight: 300; margin-bottom: 35px; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        /* Contenedor de la Foto Adaptado a Celular */
+        .photo-container {
+            width: 100%; height: calc(100% - 110px); border-radius: 20px; overflow: hidden;
+            border: 1px solid rgba(255, 179, 198, 0.2); background: rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .photo-container img {
+            width: 100%; height: 100%; object-fit: cover; transition: opacity 0.25s ease;
+        }
+        
+        .gallery-controls {
+            display: flex; justify-content: space-between; align-items: center; margin: 15px 0;
+        }
+
+        #btn-close, #btn-close-gallery, #btn-surprise, .nav-btn {
+            background: transparent; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.8);
+            padding: 10px 30px; border-radius: 30px; cursor: pointer; font-family: 'Montserrat', sans-serif;
+            font-size: 0.8rem; letter-spacing: 2px; transition: 0.3s; font-weight: 300;
+        }
+        .nav-btn { padding: 8px 20px; font-size: 0.75rem; border-color: rgba(255, 179, 198, 0.3); color: var(--accent); }
+        .nav-btn:hover { border-color: var(--primary); box-shadow: 0 0 10px rgba(255, 179, 198, 0.3); color: #fff; }
+
+        #btn-close:hover, #btn-close-gallery:hover { background: rgba(255,255,255,0.05); border-color: #fff; color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+        
+        #btn-surprise {
+            background: linear-gradient(45deg, var(--secondary), var(--primary)); border: none; color: #030102; font-weight: 600;
+        }
+        #btn-surprise:hover { box-shadow: var(--text-glow); transform: scale(1.05); }
+
+        /* Botón "Aquí tu carta" en el universo */
+        #btn-back-to-letter {
+            position: absolute; top: 25px; right: 25px;
+            background: rgba(25, 10, 15, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 179, 198, 0.3); color: var(--accent);
+            padding: 10px 22px; border-radius: 20px; cursor: pointer; font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem; letter-spacing: 2px; z-index: 100; display: none; opacity: 0;
+            transition: all 0.4s ease;
+        }
+        #btn-back-to-letter:hover {
+            border-color: var(--primary); color: #fff; box-shadow: var(--text-glow); transform: translateY(-2px);
+        }
+
+        /* Crosshair */
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3);
+            z-index: 40; pointer-events: none; transition: 0.3s ease; display: none; opacity: 0;
+        }
+        #crosshair.active { background: rgba(255,255,255,1); box-shadow: 0 0 15px var(--primary); transform: translate(-50%, -50%) scale(2); }
+    </style>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="intro-screen">
+        <h1>Lisseth Abigail Quinde Carvajal</h1>
+        <p id="error-msg">⚠️ Si ves esto negro, es porque debes usar "Live Server" o un servidor local.</p>
+        <button id="btn-enter">Felices 4 meses amor mio</button>
+    </div>
+
+    <div id="letter-screen">
+        <div style="width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 40px; background: rgba(15, 5, 10, 0.65); border: 1px solid rgba(255, 179, 198, 0.25); border-radius: 25px; box-shadow: 0 30px 60px rgba(0,0,0,0.7); text-align: center;">
+            <h2 style="font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 2.5rem; color: var(--primary); margin-bottom: 25px; letter-spacing: 2px;">Mi Amor Bonito,</h2>
+            
+            <div style="font-family: 'Montserrat', sans-serif; font-weight: 300; font-size: 1rem; line-height: 1.8; color: #f0e6e8; text-align: justify; margin-bottom: 35px; padding-right: 5px;">
+                <p style="margin-bottom: 15px;">Felices 4 meses, mi vida. Parece increíble lo rápido que pasa el tiempo cuando soy feliz a tu lado. Quería escribirte esto para recordarte lo mucho que significas para mí y lo agradecido que estoy por cada segundo que compartimos.</p>
+                <p style="margin-bottom: 15px;">Amo nuestra complicidad, nuestras risas y la hermosa mini familia de cuatro que formamos junto a nuestras bebés. Gracias por tu paciencia, por tu forma única y hermosa de ser, y por elegir quedarte conmigo en cada aventura.</p>
+                <p style="margin-bottom: 15px;">Prometo seguir mejorando día a día para darte lo mejor de mí, cuidarte y hacerte la mujer más feliz de este universo. Eres el amor de mi vida.</p>
+            </div>
+            
+            <button id="btn-surprise">ESTA ES TU SORPRESA ✨</button>
+        </div>
+    </div>
+
+    <button id="btn-back-to-letter">AQUÍ TU CARTA 💌</button>
+
+    <div id="crosshair"></div>
+
+    <div id="message-card">
+        <div id="card-icon">✨</div>
+        <div id="card-title">Lo que me gusta de ti</div>
+        <p id="card-text">Mensaje</p>
+        <button id="btn-close">CERRAR</button>
+    </div>
+
+    <div id="gallery-card">
+        <div class="gallery-title">Nuestros Momentos ❤️</div>
+        
+        <div class="photo-container">
+            <img id="gallery-img" src="foto1.jpg" alt="Nuestra foto">
+        </div>
+        
+        <div class="gallery-controls">
+            <button class="nav-btn" id="btn-prev">ANTERIOR</button>
+            <span id="gallery-index" style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">1 / 3</span>
+            <button class="nav-btn" id="btn-next">SIGUIENTE</button>
+        </div>
+        
+        <button id="btn-close-gallery">CERRAR</button>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        document.getElementById('error-msg').style.display = 'none';
+
+        const emojisPosibles = ['❤️', '💕', '💖', '💗', '💓', '💞', '✨', '🌹', '🌸', '🫶', '💫', '♡', '🦋', '🌷', '🌟', '💌'];
+        const paletaColores = ['#ffb3c6', '#ff809f', '#ffd1dc', '#ffffff', '#ff99b3'];
+
+        // --- LISTA DE FOTOS PARA LA GALERÍA ---
+        const fotosGaleria = ['foto1.jpg', 'foto2.jpg', 'foto3.jpg'];
+        let fotoActualIndex = 0;
+
+        const frases = [
+            "Amo pasar todo el día contigo.",
+            "Tu manera tan rara y bonita de ser es mi parte favorita de los dos.",
+            "Me fascina cuando te emocionas por cualquier tontería que vemos.",
+            "Gracias por llegar a alegrarle la vida a este loco.",
+            "Somos el mejor equipo que ha existido jamás.",
+            "Nuestra mini familia de cuatro es lo más lindo que tengo, mi vida.",
+            "Amo demasiado a nuestras dos bebés hermosas, la Pinky y la Buba.",
+            "La Buba llegó para adueñarse de la casa como la bebé consentida.",
+            "Me encanta ver cómo cuidas con tanto amor a las perritas.",
+            "Te amo con todo mi corazón, amor mío.",
+            "Me encanta cuando nos cagamos de risa juntos por puras bobadas.",
+            "Quedarnos acostaditos y arrullados es el mejor plan del mundo.",
+            "Es que me super encantas, en serio.",
+            "Con tal de verte sonreír y saber que estás bien, yo ya soy feliz.",
+            "Llegaste cuando menos lo esperaba a cambiarlo todo.",
+            "Todo lo que hago por ti y por nuestras bebés va con todo el corazón.",
+            "Me fascina buscar nuevas aventuras y locuras a tu lado.",
+            "Me haces reír como nadie más en este mundo puede hacerlo.",
+            "Tu autenticidad y tus ocurrencias me tienen loco.",
+            "Eres y siempre serás el gran amor de mi vida.",
+            "Me encantan hasta tus berrinches y tus caras raras cuando te picas.",
+            "Haces que el día más normal y aburrido se vuelva genial.",
+            "Amo cómo encuentras cualquier excusa para llenarme de mimos.",
+            "Tu presencia me transmite una paz que no sé cómo explicar.",
+            "Me escuchas con toda la paciencia del mundo aunque hable tonterías.",
+            "Te pasas metida en mi cabeza las veinticuatro horas del día.",
+            "Ver el mundo a tu lado es mil veces más divertido, amor mío.",
+            "Contigo los momentos más simples se terminan volviendo mágicos.",
+            "La paz que siento cuando me abrazas fuerte no la cambio por nada.",
+            "Eres mi lugar seguro en medio de todo este universo.",
+            "Me muero de amor con la forma tan tierna en la que me miras.",
+            "Gracias por tenerle tanta paciencia a este novio tuyo.",
+            "Amo cuando apareces de la nada solo para robarme un beso.",
+            "Eres la casualidad más bonita que me ha pasado.",
+            "Planear un futuro juntos con las perritas me hace muy feliz.",
+            "Tu sonrisa tiene el poder de arreglarme cualquier día gris.",
+            "Nos entendemos a la perfección con una sola mirada cómplice.",
+            "Me motivas a ser mejor cada día solo para darte lo mejor.",
+            "Cada pequeño detalle tuyo me enamora un poquito más.",
+            "Qué bonito haber coincidido en esta vida contigo.",
+            "Te ves preciosa cuando te quedas distraída pensando en tus cosas.",
+            "Gracias por alcahuetearme en absolutamente todas mis locuras.",
+            "Amo la complicidad tan única que hemos construido.",
+            "No cambiaría absolutamente nada de nuestra hermosa rutina.",
+            "Me encanta cuando me cuentas tus cosas con tanta confianza.",
+            "Nuestras manos encajan tan perfecto como nosotros dos.",
+            "Eres mi pensamiento feliz preferido del día.",
+            "Gracias por estos cuatro meses llenos de risas y mimos, mi vida.",
+            "Amo la manera tan dulce and atenta en la que me cuidas.",
+            "Contigo es facilito querer con todas las ganas del mundo.",
+            "Amo que podamos ser totalmente libres y raros cuando estamos solos.",
+            "Eres mi recordatorio favorito de lo linda que puede ser la vida.",
+            "Me fascina tu voz cuando me dices cosas bonitas al oído.",
+            "Me siento el hombre más afortunado por tenerte cerca.",
+            "Amo ver cómo corretea la Buba por todos lados siendo la nueva bebé.",
+            "La Pinky y la Buba tienen a la mamá más hermosa de todas.",
+            "Nuestras charlas de madrugada son mis momentos favoritos.",
+            "Eres muchísimo más de lo que imaginé encontrar alguna vez.",
+            "Tu felicidad siempre va a ser mi mayor prioridad.",
+            "Haces que cualquier problema se sientan chiquito si estás conmigo.",
+            "Amo tu risa escandalosa, es el sonido más lindo que conozco.",
+            "Eres la primera persona a la que quiero contarle cuando me pasa algo bueno.",
+            "Me encanta el brillo tan bonito que tienes, iluminas todo a tu alrededor.",
+            "Caminar de tu mano me hace sentir que puedo con lo que sea.",
+            "Eres la dosis de alegría exacta que le hacía falta a mis días.",
+            "Estar en silencio abrazados ya es el plan perfecto para mí.",
+            "Gracias por no soltarme y elegir quedarte aquí a mi lado.",
+            "Amo cuando te pones mimosa y nos llenamos de besos de la nada.",
+            "Eres mi presente más lindo y el futuro que más quiero cuidar.",
+            "Gracias por ser mi novia, mi mejor amiga y mi compañera de vida.",
+            "Amo que cuidemos juntos a nuestras bebés perrunas.",
+            "Desde que somos cuatro, el día a día se siente lleno de felicidad.",
+            "Qué lindo es ver crecer a la Buba junta a nosotros.",
+            "La Pinky está feliz de la vida con su nueva hermanita menor.",
+            "Eres mi persona favorita en todo el planeta entero, amor mío.",
+            "Me encanta cuando me miras de reojo y te sonríes de la nada.",
+            "Tus abrazos me reinician la vida por completo.",
+            "¡Felices cuatro meses de pura magia juntos!",
+            "Te amo hoy, mañana y en cada rincón de este inmenso universo."
+        ];
+
+        const interactiveData = frases.map((frase, i) => {
+            return {
+                id: i,
+                emoji: emojisPosibles[Math.floor(Math.random() * emojisPosibles.length)],
+                color: paletaColores[Math.floor(Math.random() * paletaColores.length)],
+                title: "Pensando en ti",
+                card: frase 
+            };
+        });
+
+        // Configuración Escena 3D
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x030102, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 40, 120);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.03;
+        controls.autoRotate = true; controls.autoRotateSpeed = 0.2;
+        controls.maxDistance = 350; controls.minDistance = 25;
+
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.8, 0.8, 0.1
+        );
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderScene); composer.addPass(bloomPass);
+
+        // --- CENTRO INTERACTIVO ---
+        const bhGeometry = new THREE.SphereGeometry(12, 64, 64);
+        const bhMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const blackHole = new THREE.Mesh(bhGeometry, bhMaterial);
+        blackHole.userData = { isCenter: true }; 
+        scene.add(blackHole);
+
+        const diskGeometry = new THREE.PlaneGeometry(100, 100, 128, 128);
+        const diskShaderMaterial = new THREE.ShaderMaterial({
+            uniforms: { time: { value: 0.0 }, color1: { value: new THREE.Color(0xffd1dc) }, color2: { value: new THREE.Color(0xff5522) } },
+            vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+            fragmentShader: `
+                uniform float time; uniform vec3 color1; uniform vec3 color2; varying vec2 vUv;
+                float rand(vec2 co){ return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453); }
+                void main() {
+                    vec2 p = -1.0 + 2.0 * vUv; float r = length(p); float a = atan(p.y, p.x);
+                    if(r < 0.25) discard;
+                    float f = sin(r * 30.0 - time * 2.0 + a * 4.0) + sin(r * 50.0 - time * 4.0 + a * 8.0) * 0.5;
+                    vec3 col = mix(color2, color1, f * 0.5 + 0.5);
+                    float glow = 0.08 / (r - 0.2); float edgeFade = smoothstep(1.0, 0.3, r);
+                    float alpha = edgeFade * glow * (f * 0.5 + 0.8) + (rand(p * time * 0.001) * 0.1);
+                    gl_FragColor = vec4(col * alpha * 1.5, alpha);
+                }
+            `,
+            transparent: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const accretionDisk = new THREE.Mesh(diskGeometry, diskShaderMaterial);
+        accretionDisk.rotation.x = Math.PI / 2.1; 
+        scene.add(accretionDisk);
+
+        const starGeo = new THREE.BufferGeometry(); const starPos = new Float32Array(15000 * 3);
+        for(let i = 0; i < 15000; i++) {
+            const r = 25 + Math.pow(Math.random(), 2) * 250; const theta = Math.random() * 2 * Math.PI; const phi = Math.acos((Math.random() * 2 - 1) * 0.1); 
+            starPos[i*3] = r * Math.sin(phi) * Math.cos(theta); starPos[i*3+1] = r * Math.cos(phi) * (Math.random() * 0.6); starPos[i*3+2] = r * Math.sin(phi) * Math.sin(theta);
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        const starMat = new THREE.PointsMaterial({ size: 0.6, color: 0xffe6ea, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+        const stars = new THREE.Points(starGeo, starMat); scene.add(stars);
+
+        const interactiveSprites = [];
+
+        function createEmojiHologramSprite(emojiText, colorHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            const gradient = ctx.createRadialGradient(256, 256, 30, 256, 256, 220);
+            gradient.addColorStop(0, colorHex + '33'); 
+            gradient.addColorStop(0.5, colorHex + '11'); 
+            gradient.addColorStop(1, 'rgba(0,0,0,0)'); 
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 512, 512);
+
+            ctx.font = '160px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.6)'; ctx.shadowBlur = 15;
+            ctx.fillStyle = '#ffffff'; 
+            ctx.fillText(emojiText, 256, 275); 
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace; 
+            const material = new THREE.SpriteMaterial({ map: texture, transparent: true, blending: THREE.NormalBlending, depthWrite: false });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(15, 15, 1); 
+            return sprite;
+        }
+
+        interactiveData.forEach((data, index) => {
+            const sprite = createEmojiHologramSprite(data.emoji, data.color);
+            const angle = (index / interactiveData.length) * Math.PI * 4 + Math.random(); 
+            const distance = 45 + (Math.random() * 110); 
+            const height = (Math.random() - 0.5) * 70;
+            sprite.position.set(Math.cos(angle) * distance, height, Math.sin(angle) * distance);
+            sprite.userData = { data: data, angle: angle, distance: distance, baseY: height, speed: 0.001 + Math.random() * 0.002, bobSpeed: 1 + Math.random() * 2, originalScale: 15 };
+            scene.add(sprite);
+            interactiveSprites.push(sprite);
+        });
+
+        const clickTargets = [...interactiveSprites, blackHole];
+
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const crosshair = document.getElementById('crosshair');
+        const cardModal = document.getElementById('message-card');
+        const galleryModal = document.getElementById('gallery-card');
+        const letterScreen = document.getElementById('letter-screen');
+        const introScreen = document.getElementById('intro-screen');
+        const btnBackToLetter = document.getElementById('btn-back-to-letter');
+        const btnSurprise = document.getElementById('btn-surprise');
+        const galleryImg = document.getElementById('gallery-img');
+        const galleryIndexSpan = document.getElementById('gallery-index');
+        
+        let mouseStartX = 0;
+        let mouseStartY = 0;
+        const dragThreshold = 5; 
+
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        window.addEventListener('mousedown', (event) => {
+            mouseStartX = event.clientX;
+            mouseStartY = event.clientY;
+        });
+
+        window.addEventListener('mouseup', (event) => {
+            if (cardModal.classList.contains('active') || galleryModal.classList.contains('active') || letterScreen.style.opacity === '1' || introScreen.style.display !== 'none') return;
+            if (event.target.tagName === 'BUTTON') return;
+
+            const deltaX = Math.abs(event.clientX - mouseStartX);
+            const deltaY = Math.abs(event.clientY - mouseStartY);
+            if (deltaX > dragThreshold || deltaY > dragThreshold) return; 
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(clickTargets);
+
+            if (intersects.length > 0) {
+                const target = intersects[0].object;
+
+                if (target.userData.isCenter) {
+                    fotoActualIndex = 0;
+                    actualizarGaleria();
+                    galleryModal.classList.add('active');
+                } else {
+                    const data = target.userData.data;
+                    target.scale.set(22, 22, 1);
+                    setTimeout(() => target.scale.set(15, 15, 1), 300);
+
+                    document.getElementById('card-icon').innerText = data.emoji;
+                    document.getElementById('card-icon').style.textShadow = `0 0 20px ${data.color}`;
+                    document.getElementById('card-title').innerText = data.title;
+                    document.getElementById('card-text').innerText = data.card;
+                    cardModal.classList.add('active');
+                }
+            }
+        });
+
+        function actualizarGaleria() {
+            galleryImg.style.opacity = '0';
+            setTimeout(() => {
+                galleryImg.src = fotosGaleria[fotoActualIndex];
+                galleryIndexSpan.innerText = `${fotoActualIndex + 1} / ${fotosGaleria.length}`;
+                galleryImg.style.opacity = '1';
+            }, 150);
+        }
+
+        document.getElementById('btn-next').addEventListener('click', () => {
+            fotoActualIndex = (fotoActualIndex + 1) % fotosGaleria.length;
+            actualizarGaleria();
+        });
+
+        document.getElementById('btn-prev').addEventListener('click', () => {
+            fotoActualIndex = (fotoActualIndex - 1 + fotosGaleria.length) % fotosGaleria.length;
+            actualizarGaleria();
+        });
+
+        document.getElementById('btn-close').addEventListener('click', () => cardModal.classList.remove('active'));
+        document.getElementById('btn-close-gallery').addEventListener('click', () => galleryModal.classList.remove('active'));
+
+        // Transiciones básicas
+        document.getElementById('btn-enter').addEventListener('click', () => {
+            introScreen.style.opacity = '0';
+            container.style.display = 'block';
+            container.style.opacity = '1';
+            setTimeout(() => {
+                introScreen.style.display = 'none';
+                letterScreen.style.pointerEvents = 'auto';
+                letterScreen.style.opacity = '1';
+            }, 300);
+        });
+
+        btnSurprise.addEventListener('click', () => {
+            letterScreen.style.opacity = '0';
+            letterScreen.style.pointerEvents = 'none';
+            crosshair.style.display = 'block';
+            crosshair.style.opacity = '1';
+            btnBackToLetter.style.display = 'block';
+            setTimeout(() => btnBackToLetter.style.opacity = '1', 50);
+            
+            const targetZ = 120; 
+            camera.position.z = targetZ + 120;
+            const introInterval = setInterval(() => {
+                camera.position.z -= (camera.position.z - targetZ) * 0.08;
+                if(Math.abs(camera.position.z - targetZ) < 0.2) {
+                    camera.position.z = targetZ;
+                    clearInterval(introInterval);
+                }
+            }, 16);
+        });
+
+        btnBackToLetter.addEventListener('click', () => {
+            cardModal.classList.remove('active'); 
+            galleryModal.classList.remove('active'); 
+            crosshair.style.opacity = '0';
+            btnBackToLetter.style.opacity = '0';
+            setTimeout(() => {
+                crosshair.style.display = 'none';
+                btnBackToLetter.style.display = 'none';
+                btnSurprise.innerText = "VOLVER AL UNIVERSO ✨";
+                letterScreen.style.pointerEvents = 'auto';
+                letterScreen.style.opacity = '1';
+            }, 400); 
+        });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            controls.update();
+            diskShaderMaterial.uniforms.time.value = elapsedTime;
+            stars.rotation.y = elapsedTime * 0.005;
+
+            interactiveSprites.forEach((sprite) => {
+                const ud = sprite.userData;
+                ud.angle += ud.speed;
+                sprite.position.x = Math.cos(ud.angle) * ud.distance;
+                sprite.position.z = Math.sin(ud.angle) * ud.distance;
+                sprite.position.y = ud.baseY + Math.sin(elapsedTime * ud.bobSpeed + ud.angle) * 3;
+                
+                const pulse = ud.originalScale + Math.sin(elapsedTime * 3 + ud.angle) * 1.2;
+                if(sprite.scale.x < 18) sprite.scale.set(pulse, pulse, 1);
+            });
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(clickTargets);
+            const pantallaLibre = !cardModal.classList.contains('active') && !galleryModal.classList.contains('active') && letterScreen.style.opacity !== '1' && introScreen.style.display === 'none';
+            
+            if(intersects.length > 0 && pantallaLibre) {
+                crosshair.classList.add('active'); 
+                document.body.style.cursor = 'pointer';
+                if (intersects[0].object.userData.isCenter) {
+                    diskShaderMaterial.uniforms.color1.value.set('#ffffff');
+                } else {
+                    diskShaderMaterial.uniforms.color1.value.set('#ffd1dc');
+                }
+            } else {
+                crosshair.classList.remove('active'); 
+                document.body.style.cursor = 'default';
+                diskShaderMaterial.uniforms.color1.value.set('#ffd1dc');
+            }
+
+            composer.render();
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight); composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
+
+```
+
+Con este rediseño, las fotos mantendrán su forma natural, nítida y estilizada de arriba a abajo. Pruébalo ahora en tu servidor local, ¡así sí que va a lucir perfecto!
