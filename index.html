@@ -2,50 +2,41 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>NUESTRO UNIVERSO</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght=200;300;400;600&family=Cormorant+Garamond:ital,wght=1,300&display=swap" rel="stylesheet">
-    
     <style>
-        /* Estilos base */
-        body { margin: 0; overflow: hidden; background-color: #030102; font-family: 'Montserrat', sans-serif; color: white; }
-        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; display: none; opacity: 0; transition: opacity 1.2s ease-in-out; }
-        
-        /* Pantalla Inicio */
-        #intro-screen { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: #030102; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 200; }
-        
-        /* Modal Login */
+        body { margin: 0; overflow: hidden; background: #000; color: white; font-family: sans-serif; }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; display: none; }
+        #intro-screen { position: fixed; top:0; left:0; width:100%; height:100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; background: #000; }
         #login-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: #111; padding: 30px; border-radius: 15px; border: 1px solid #ffb3c6; text-align: center; }
-        input { display: block; margin: 10px auto; padding: 12px; width: 250px; background: #222; border: 1px solid #444; color: white; border-radius: 5px; }
-        button { padding: 12px 30px; cursor: pointer; background: transparent; border: 1px solid #ffb3c6; color: #ffb3c6; border-radius: 20px; margin-top: 10px; }
+        .modal-box { background: #111; padding: 30px; border-radius: 15px; border: 1px solid #ffd1dc; text-align: center; }
+        input { display: block; margin: 10px auto; padding: 10px; width: 250px; }
+        button { padding: 10px 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="intro-screen">
-        <h1 style="font-family: 'Cormorant Garamond', serif; color: #ffd1dc;">Lisseth Abigail Quinde Carvajal</h1>
-        <div id="contador-amor" style="color: #ffb3c6; margin-bottom: 20px;">
-            Llevamos juntos: <span id="tiempo-juntos"></span>
-        </div>
-        <button id="btn-enter">Felices 4 meses amor mio</button>
+        <h1>Lisseth Abigail</h1>
+        <button id="btn-enter">Entrar al Universo</button>
     </div>
 
     <div id="login-modal">
         <div class="modal-box">
-            <h2>🔐 Acceso Protegido</h2>
-            <input type="email" id="email-field" placeholder="Correo electrónico">
+            <h2>Acceso Protegido</h2>
+            <input type="email" id="email-field" placeholder="Correo">
             <input type="password" id="password-field" placeholder="Contraseña">
-            <button id="btn-login-confirm">Entrar al Diario</button>
+            <button id="btn-login-confirm">Entrar</button>
         </div>
     </div>
 
     <div id="canvas-container"></div>
 
     <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // 1. FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyAWjXELwErrdBqLzfuw8KvR4BhSJaOx3aE",
             authDomain: "recuerdos-8ed7e.firebaseapp.com",
@@ -55,61 +46,54 @@
             appId: "1:1032696494533:web:8c5d6710729037379433ac",
             measurementId: "G-1QB6V6VSN4"
         };
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         setPersistence(auth, browserLocalPersistence);
 
+        // 2. ESCENA 3D
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+        
+        // Agregar algo para que no esté negro (luz y un cubo de prueba)
+        const light = new THREE.AmbientLight(0xffffff); 
+        scene.add(light);
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0xffd1dc });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        camera.position.z = 5;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // 3. LÓGICA DE CONTROL
         const loginModal = document.getElementById('login-modal');
-        const btnEnter = document.getElementById('btn-enter');
-        const btnLoginConfirm = document.getElementById('btn-login-confirm');
-        const introScreen = document.getElementById('intro-screen');
-        const container = document.getElementById('canvas-container');
-
-        function ejecutarEntrada() {
-        console.log("Intentando entrar al universo..."); // Esto aparecerá en la consola (F12)
         
-        const introScreen = document.getElementById('intro-screen');
-        const container = document.getElementById('canvas-container');
-        
-        if (introScreen) introScreen.style.display = 'none';
-        if (container) {
-            container.style.display = 'block';
-            container.style.opacity = '1';
-            console.log("Contenedor mostrado.");
-        } else {
-            console.error("¡ERROR! No se encontró el elemento canvas-container");
-        }
-    }
-
-        btnEnter.addEventListener('click', () => {
-            if (auth.currentUser) {
-                ejecutarEntrada();
-            } else {
-                loginModal.style.display = 'flex';
-            }
+        document.getElementById('btn-enter').addEventListener('click', () => {
+            auth.currentUser ? iniciar() : loginModal.style.display = 'flex';
         });
 
-        btnLoginConfirm.addEventListener('click', async () => {
-            const email = document.getElementById('email-field').value;
-            const password = document.getElementById('password-field').value;
+        document.getElementById('btn-login-confirm').addEventListener('click', async () => {
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                await signInWithEmailAndPassword(auth, document.getElementById('email-field').value, document.getElementById('password-field').value);
                 loginModal.style.display = 'none';
-                ejecutarEntrada();
-            } catch (error) {
-                alert("Error de acceso: " + error.message);
-            }
+                iniciar();
+            } catch (e) { alert("Error: " + e.message); }
         });
 
-        function actualizarContador() {
-            const fechaInicio = new Date('2026-01-31T00:00:00');
-            const diff = new Date() - fechaInicio;
-            const meses = Math.floor(diff / (1000 * 60 * 60 * 24 * 30.44));
-            const dias = Math.floor((diff % (1000 * 60 * 60 * 24 * 30.44)) / (1000 * 60 * 60 * 24));
-            document.getElementById('tiempo-juntos').innerText = `${meses} meses y ${dias} días`;
+        function iniciar() {
+            document.getElementById('intro-screen').style.display = 'none';
+            container.style.display = 'block';
         }
-        actualizarContador();
     </script>
 </body>
 </html>
